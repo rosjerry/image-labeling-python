@@ -24,6 +24,8 @@ services:
   db:
     image: postgres:13
     container_name: label-studio-db
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
