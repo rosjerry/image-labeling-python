@@ -5,7 +5,7 @@ services:
     image: heartexlabs/label-studio:latest
     container_name: label-studio
     ports:
-      - "8080:8080"
+      - "9001:8080"
     environment:
       - DJANGO_DB=default
       - POSTGRE_NAME=postgres
@@ -13,7 +13,7 @@ services:
       - POSTGRE_PASSWORD=password
       - POSTGRE_HOST=db
       - POSTGRE_PORT=5432
-      - LABEL_STUDIO_HOST=http://localhost:8080
+      - LABEL_STUDIO_HOST=http://localhost:9001
     volumes:
       - label-studio-data:/label-studio/data
     depends_on:
