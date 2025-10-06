@@ -106,7 +106,24 @@ class CarDataset(Dataset):
             match = re.search(r'/([^/]+\.jpg)$', image_url)
             if match:
                 filename = match.group(1)
-                return os.path.join(self.image_dir, filename)
+                
+                # Try multiple possible locations for the image
+                possible_paths = [
+                    # Direct path in image_dir
+                    os.path.join(self.image_dir, filename),
+                    # Path with subdirectory structure
+                    os.path.join(self.image_dir, 'toyota', 'rav4', filename.split('_')[0], filename),
+                    # Flat structure
+                    os.path.join(self.image_dir, filename)
+                ]
+                
+                # Return the first path that exists
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        return path
+                
+                # If no path exists, return the first one (will be handled by error checking)
+                return possible_paths[0]
         return None
     
     def _extract_labels(self, results: List[Dict]) -> Dict[str, int]:
@@ -249,7 +266,7 @@ def create_data_loaders(json_path: str, image_dir: str, batch_size: int = 32,
 
 if __name__ == "__main__":
     # Test the data loader
-    json_path = "project-1-at-2025-10-05-20-21-409a5f93.json"
+    json_path = "project-1-at-2025-10-05-21-43-98b8ac33.json"
     image_dir = "images"  # Adjust this path as needed
     
     if os.path.exists(json_path):

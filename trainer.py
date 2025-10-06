@@ -258,7 +258,8 @@ class ModelTrainer:
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=scheduler_step, gamma=scheduler_gamma)
         
         # Setup loss function
-        criterion = nn.CrossEntropyLoss()
+        from model import MultiLabelLoss
+        criterion = MultiLabelLoss()
         
         # Setup early stopping
         early_stopping = EarlyStopping(patience=early_stopping_patience)
