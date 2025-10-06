@@ -4,3 +4,6 @@ ENV/
 .venv/
 .env/
 .env
+images/
+checkpoints/best_model.pth
+checkpoints/final_model.pth
