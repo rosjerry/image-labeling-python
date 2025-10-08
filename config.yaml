@@ -5,19 +5,19 @@ data:
   json_path: "project-1-at-2025-10-05-21-43-98b8ac33.json"
   image_dir: "images"  # Update this path to your image directory
   val_split: 0.2
-  image_size: 224
-  batch_size: 32
-  num_workers: 4
+  image_size: 160  # Reduced from 224 to save memory
+  batch_size: 8    # Reduced from 32 to save memory
+  num_workers: 1   # Reduced from 4 to save CPU usage
 
 # Model settings
 model:
-  backbone: "resnet50"  # Options: resnet50, efficientnet_b0, densenet121, etc.
+  backbone: "resnet18"  # Changed to smaller model to save memory
   pretrained: true
   dropout_rate: 0.5
 
 # Training settings
 training:
-  epochs: 100
+  epochs: 2
   learning_rate: 1e-4
   weight_decay: 1e-4
   scheduler_step: 10
@@ -35,3 +35,10 @@ misc:
   seed: 42
   device: "auto"  # auto, cpu, cuda
   freeze_backbone: false
+
+# Memory optimization settings
+memory:
+  gradient_accumulation_steps: 4  # Accumulate gradients over 4 steps to simulate larger batch size
+  mixed_precision: true          # Use mixed precision training to save memory
+  pin_memory: false              # Disable pin_memory to save RAM
+  persistent_workers: false       # Disable persistent workers to save memory

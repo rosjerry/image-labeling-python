@@ -1,0 +1,5 @@
+{
+    "make": {"honda": 0, "toyota": 1},
+    "model": {"accord": 0, "rav4": 1},
+    "steer_wheel": {"left": 0}
+}

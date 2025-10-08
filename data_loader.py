@@ -207,7 +207,8 @@ def get_data_transforms(image_size: int = 224) -> Tuple[transforms.Compose, tran
 
 def create_data_loaders(json_path: str, image_dir: str, batch_size: int = 32, 
                         image_size: int = 224, val_split: float = 0.2, 
-                        num_workers: int = 4) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+                        num_workers: int = 4, pin_memory: bool = True, 
+                        persistent_workers: bool = False) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """
     Create training and validation data loaders.
     
@@ -218,6 +219,8 @@ def create_data_loaders(json_path: str, image_dir: str, batch_size: int = 32,
         image_size: Target image size
         val_split: Validation split ratio
         num_workers: Number of worker processes
+        pin_memory: Whether to pin memory for faster GPU transfer
+        persistent_workers: Whether to keep workers alive between epochs
         
     Returns:
         Tuple of (train_loader, val_loader, num_classes)
@@ -253,12 +256,14 @@ def create_data_loaders(json_path: str, image_dir: str, batch_size: int = 32,
     # Create data loaders
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, shuffle=True, 
-        num_workers=num_workers, pin_memory=True
+        num_workers=num_workers, pin_memory=pin_memory,
+        persistent_workers=persistent_workers and num_workers > 0
     )
     
     val_loader = DataLoader(
         val_dataset, batch_size=batch_size, shuffle=False, 
-        num_workers=num_workers, pin_memory=True
+        num_workers=num_workers, pin_memory=pin_memory,
+        persistent_workers=persistent_workers and num_workers > 0
     )
     
     return train_loader, val_loader, num_classes

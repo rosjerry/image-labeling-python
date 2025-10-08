@@ -104,7 +104,8 @@ class ModelTrainer:
         self.model.to(device)
     
     def train_epoch(self, train_loader: DataLoader, optimizer: optim.Optimizer, 
-                   criterion: nn.Module, epoch: int) -> Tuple[float, Dict[str, float]]:
+                   criterion: nn.Module, epoch: int, gradient_accumulation_steps: int = 1,
+                   scaler=None) -> Tuple[float, Dict[str, float]]:
         """
         Train for one epoch.
         
@@ -113,6 +114,8 @@ class ModelTrainer:
             optimizer: Optimizer
             criterion: Loss function
             epoch: Current epoch number
+            gradient_accumulation_steps: Number of steps to accumulate gradients
+            scaler: Mixed precision scaler (optional)
             
         Returns:
             Tuple of (average_loss, accuracies)
@@ -132,19 +135,31 @@ class ModelTrainer:
             images = images.to(self.device)
             labels = {k: v.to(self.device) for k, v in labels.items()}
             
-            # Zero gradients
-            optimizer.zero_grad()
-            
-            # Forward pass
-            predictions = self.model(images)
-            
-            # Compute loss
-            losses = criterion(predictions, labels)
-            loss = losses['total_loss']
+            # Forward pass with mixed precision if enabled
+            if scaler is not None:
+                with torch.cuda.amp.autocast():
+                    predictions = self.model(images)
+                    losses = criterion(predictions, labels)
+                    loss = losses['total_loss'] / gradient_accumulation_steps
+            else:
+                predictions = self.model(images)
+                losses = criterion(predictions, labels)
+                loss = losses['total_loss'] / gradient_accumulation_steps
             
             # Backward pass
-            loss.backward()
-            optimizer.step()
+            if scaler is not None:
+                scaler.scale(loss).backward()
+            else:
+                loss.backward()
+            
+            # Update weights only after accumulating gradients
+            if (batch_idx + 1) % gradient_accumulation_steps == 0:
+                if scaler is not None:
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    optimizer.step()
+                optimizer.zero_grad()
             
             # Update metrics
             total_loss += loss.item()
@@ -235,7 +250,8 @@ class ModelTrainer:
               num_epochs: int = 100, learning_rate: float = 1e-4,
               weight_decay: float = 1e-4, scheduler_step: int = 10,
               scheduler_gamma: float = 0.1, early_stopping_patience: int = 10,
-              save_best: bool = True) -> Dict:
+              save_best: bool = True, gradient_accumulation_steps: int = 1,
+              mixed_precision: bool = False) -> Dict:
         """
         Train the model.
         
@@ -249,6 +265,8 @@ class ModelTrainer:
             scheduler_gamma: Gamma for learning rate scheduler
             early_stopping_patience: Patience for early stopping
             save_best: Whether to save best model
+            gradient_accumulation_steps: Number of steps to accumulate gradients
+            mixed_precision: Whether to use mixed precision training
             
         Returns:
             Training history
@@ -256,6 +274,11 @@ class ModelTrainer:
         # Setup optimizer and scheduler
         optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=scheduler_step, gamma=scheduler_gamma)
+        
+        # Setup mixed precision scaler if enabled
+        scaler = None
+        if mixed_precision and self.device.type == 'cuda':
+            scaler = torch.cuda.amp.GradScaler()
         
         # Setup loss function
         from model import MultiLabelLoss
@@ -271,7 +294,8 @@ class ModelTrainer:
             start_time = time.time()
             
             # Train
-            train_loss, train_acc = self.train_epoch(train_loader, optimizer, criterion, epoch)
+            train_loss, train_acc = self.train_epoch(train_loader, optimizer, criterion, epoch, 
+                                                   gradient_accumulation_steps, scaler)
             
             # Validate
             val_loss, val_acc = self.validate_epoch(val_loader, criterion, epoch)

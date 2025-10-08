@@ -62,7 +62,7 @@ python main.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
 python main.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
                 --image_dir images/ \
                 --backbone efficientnet_b0 \
-                --epochs 100 \
+                --epochs 2 \
                 --batch_size 16 \
                 --learning_rate 1e-4 \
                 --weight_decay 1e-4 \

@@ -45,6 +45,14 @@ def parse_args() -> argparse.Namespace:
                        help='Batch size (default: 32)')
     parser.add_argument('--num_workers', type=int, default=4,
                        help='Number of worker processes (default: 4)')
+    parser.add_argument('--pin_memory', action='store_true', default=True,
+                       help='Pin memory for faster GPU transfer (default: True)')
+    parser.add_argument('--persistent_workers', action='store_true',
+                       help='Keep workers alive between epochs (default: False)')
+    parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
+                       help='Number of steps to accumulate gradients (default: 1)')
+    parser.add_argument('--mixed_precision', action='store_true',
+                       help='Use mixed precision training (default: False)')
     
     # Model arguments
     parser.add_argument('--backbone', type=str, default='resnet50',
@@ -58,7 +66,7 @@ def parse_args() -> argparse.Namespace:
                        help='Dropout rate (default: 0.5)')
     
     # Training arguments
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=2,
                        help='Number of epochs (default: 100)')
     parser.add_argument('--learning_rate', type=float, default=1e-4,
                        help='Learning rate (default: 1e-4)')
@@ -154,7 +162,9 @@ def main():
         batch_size=args.batch_size,
         image_size=args.image_size,
         val_split=args.val_split,
-        num_workers=args.num_workers
+        num_workers=args.num_workers,
+        pin_memory=args.pin_memory,
+        persistent_workers=args.persistent_workers
     )
     
     print(f"Data loaded successfully!")
@@ -198,7 +208,9 @@ def main():
         scheduler_step=args.scheduler_step,
         scheduler_gamma=args.scheduler_gamma,
         early_stopping_patience=args.early_stopping_patience,
-        save_best=args.save_best
+        save_best=args.save_best,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        mixed_precision=args.mixed_precision
     )
     
     # Save training history
