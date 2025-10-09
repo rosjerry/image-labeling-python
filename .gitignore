@@ -59,17 +59,17 @@ htmlcov/
 .nox/
 
 # Project-specific
-images/
+data/images/
+data/raw/
 checkpoints/*.pth
 checkpoints/*.pt
 *.json.bak
 *.json.tmp
 
-# Large data files
-*.json
-!config.json
-!label_mapping.json
-!package.json
+# Data files (keep structure files)
+data/annotations/*.json
+data/predictions/*.json
+!data/README.md
 
 # Logs
 *.log
