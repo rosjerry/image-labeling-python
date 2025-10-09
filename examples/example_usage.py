@@ -6,9 +6,9 @@ This script demonstrates how to use the training pipeline with your data.
 
 import os
 import json
-from data_loader import create_data_loaders
-from model import create_model
-from trainer import ModelTrainer
+from car_classifier.data_loader import create_data_loaders
+from car_classifier.model import create_model
+from car_classifier.trainer import ModelTrainer
 
 
 def example_training():

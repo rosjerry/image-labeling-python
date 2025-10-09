@@ -15,8 +15,8 @@ from flask import Flask, request, jsonify, render_template_string
 from werkzeug.utils import secure_filename
 import logging
 
-from model import create_model
-from data_loader import get_data_transforms
+from car_classifier.model import create_model
+from car_classifier.data_loader import get_data_transforms
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

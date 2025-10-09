@@ -12,9 +12,9 @@ import random
 import numpy as np
 from typing import Dict, Any
 
-from data_loader import create_data_loaders
-from model import create_model, count_parameters
-from trainer import ModelTrainer
+from car_classifier.data_loader import create_data_loaders
+from car_classifier.model import create_model, count_parameters
+from car_classifier.trainer import ModelTrainer
 
 
 def set_seed(seed: int = 42):

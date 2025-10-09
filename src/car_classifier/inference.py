@@ -14,8 +14,8 @@ import numpy as np
 from typing import Dict, List, Tuple
 import glob
 
-from model import create_model
-from data_loader import get_data_transforms
+from car_classifier.model import create_model
+from car_classifier.data_loader import get_data_transforms
 
 
 class CarClassifierInference:

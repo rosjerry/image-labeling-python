@@ -12,9 +12,9 @@ from PIL import Image
 import tempfile
 import shutil
 
-from data_loader import create_data_loaders, CarDataset
-from model import create_model, MultiLabelLoss
-from trainer import ModelTrainer
+from car_classifier.data_loader import create_data_loaders, CarDataset
+from car_classifier.model import create_model, MultiLabelLoss
+from car_classifier.trainer import ModelTrainer
 
 
 def create_dummy_data(num_samples: int = 100, image_size: int = 224):

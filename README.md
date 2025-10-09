@@ -16,14 +16,38 @@ A PyTorch training pipeline for multi-label car image classification using Label
 
 ```
 image-labeling-python/
-├── main.py                 # Main training script
-├── data_loader.py          # Dataset and data loading utilities
-├── model.py               # Model architecture definitions
-├── trainer.py             # Training loop and utilities
-├── inference.py           # Inference and prediction utilities
-├── requirements.txt       # Python dependencies
-├── config.yaml           # Configuration file
-└── README.md            # This file
+├── src/
+│   └── car_classifier/          # Core package
+│       ├── __init__.py
+│       ├── model.py             # Model architectures
+│       ├── trainer.py           # Training logic
+│       ├── data_loader.py       # Dataset and data loading
+│       └── inference.py         # Inference utilities
+├── scripts/
+│   ├── labelstudio/             # Label Studio integration
+│   │   ├── create_labels.py    # Create labels in bulk
+│   │   ├── update_labels.py    # Update labels in bulk
+│   │   └── convert_predictions.py  # Convert predictions to annotations
+│   └── data_preparation/        # Data preparation utilities
+│       ├── copy_images.py       # Copy images from multiple sources
+│       └── setup_images.py      # Setup image directory structure
+├── app/                         # Production API
+│   ├── production_app.py        # Flask API server
+│   └── api_client.py            # API client library
+├── tests/
+│   └── test_pipeline.py         # Pipeline tests
+├── examples/
+│   ├── train.py                 # Training example (main script)
+│   └── example_usage.py         # Usage examples
+├── docker/
+│   ├── Dockerfile
+│   └── docker-compose.yml
+├── checkpoints/                 # Model checkpoints
+├── images/                      # Training images
+├── config.yaml                  # Configuration file
+├── requirements.txt             # Python dependencies
+├── setup.py                     # Package installation
+└── README.md                    # This file
 ```
 
 ## Installation
@@ -34,10 +58,16 @@ git clone <repository-url>
 cd image-labeling-python
 ```
 
-2. **Install dependencies**:
+2. **Install the package and dependencies**:
 ```bash
-pip install -r requirements.txt
+# Install in development mode (recommended for development)
+pip install -e .
+
+# Or install directly
+pip install .
 ```
+
+This will install the `car_classifier` package and all dependencies from `requirements.txt`.
 
 3. **Prepare your data**:
    - Place your Label Studio JSON file in the project directory
@@ -50,51 +80,65 @@ pip install -r requirements.txt
 
 #### Basic Training
 ```bash
-python main.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
-                --image_dir images/ \
-                --backbone resnet50 \
-                --epochs 50 \
-                --batch_size 32
+# Using the train script from examples
+python examples/train.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
+                         --image_dir images/ \
+                         --backbone resnet50 \
+                         --epochs 50 \
+                         --batch_size 32
+
+# Or if installed, use the command-line tool
+car-classifier-train --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
+                     --image_dir images/ \
+                     --backbone resnet50 \
+                     --epochs 50 \
+                     --batch_size 32
 ```
 
 #### Advanced Training with Custom Settings
 ```bash
-python main.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
-                --image_dir images/ \
-                --backbone efficientnet_b0 \
-                --epochs 2 \
-                --batch_size 16 \
-                --learning_rate 1e-4 \
-                --weight_decay 1e-4 \
-                --val_split 0.2 \
-                --save_dir checkpoints \
-                --device cuda
+python examples/train.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
+                         --image_dir images/ \
+                         --backbone efficientnet_b0 \
+                         --epochs 2 \
+                         --batch_size 16 \
+                         --learning_rate 1e-4 \
+                         --weight_decay 1e-4 \
+                         --val_split 0.2 \
+                         --save_dir checkpoints \
+                         --device cuda
 ```
 
 #### Training with Frozen Backbone
 ```bash
-python main.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
-                --image_dir images/ \
-                --freeze_backbone \
-                --epochs 20 \
-                --learning_rate 1e-3
+python examples/train.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
+                         --image_dir images/ \
+                         --freeze_backbone \
+                         --epochs 20 \
+                         --learning_rate 1e-3
 ```
 
 ### Inference
 
 #### Single Image Prediction
 ```bash
-python inference.py --model_path checkpoints/best_model.pth \
-                    --label_mapping checkpoints/label_mapping.json \
-                    --image_path test_image.jpg
+# Using Python
+python -m car_classifier.inference --model_path checkpoints/best_model.pth \
+                                   --label_mapping checkpoints/label_mapping.json \
+                                   --image_path test_image.jpg
+
+# Or if installed, use the command-line tool
+car-classifier-inference --model_path checkpoints/best_model.pth \
+                         --label_mapping checkpoints/label_mapping.json \
+                         --image_path test_image.jpg
 ```
 
 #### Batch Prediction
 ```bash
-python inference.py --model_path checkpoints/best_model.pth \
-                    --label_mapping checkpoints/label_mapping.json \
-                    --image_dir test_images/ \
-                    --output_path predictions.json
+python -m car_classifier.inference --model_path checkpoints/best_model.pth \
+                                   --label_mapping checkpoints/label_mapping.json \
+                                   --image_dir test_images/ \
+                                   --output_path predictions.json
 ```
 
 ## Configuration
@@ -257,26 +301,86 @@ After training, the following files are created in the save directory:
 
 ### Quick Start
 ```bash
-# Train with default settings
-python main.py --json_path data.json --image_dir images/
+# 1. Install the package
+pip install -e .
 
-# Run inference
-python inference.py --model_path checkpoints/best_model.pth \
-                    --label_mapping checkpoints/label_mapping.json \
-                    --image_path test.jpg
+# 2. Train with default settings
+python examples/train.py --json_path data.json --image_dir images/
+
+# 3. Run inference
+python -m car_classifier.inference --model_path checkpoints/best_model.pth \
+                                   --label_mapping checkpoints/label_mapping.json \
+                                   --image_path test.jpg
+
+# 4. Run production API
+python app/production_app.py
 ```
 
 ### Production Training
 ```bash
 # High-quality training setup
-python main.py --json_path data.json --image_dir images/ \
-                --backbone efficientnet_b2 \
-                --epochs 200 \
-                --batch_size 16 \
-                --learning_rate 5e-5 \
-                --weight_decay 1e-4 \
-                --val_split 0.15 \
-                --save_dir production_models
+python examples/train.py --json_path data.json --image_dir images/ \
+                         --backbone efficientnet_b2 \
+                         --epochs 200 \
+                         --batch_size 16 \
+                         --learning_rate 5e-5 \
+                         --weight_decay 1e-4 \
+                         --val_split 0.15 \
+                         --save_dir production_models
+```
+
+### Using Utility Scripts
+
+#### Label Studio Scripts
+```bash
+# Create labels in bulk for Label Studio
+python scripts/labelstudio/create_labels.py
+
+# Update existing labels in bulk
+python scripts/labelstudio/update_labels.py
+
+# Convert predictions to annotations
+python scripts/labelstudio/convert_predictions.py
+```
+
+#### Data Preparation Scripts
+```bash
+# Copy images from multiple directories
+python scripts/data_preparation/copy_images.py
+
+# Setup image directory structure
+python scripts/data_preparation/setup_images.py
+```
+
+### Running the Production API
+```bash
+# Start the Flask API server
+python app/production_app.py
+
+# The API will be available at http://localhost:5000
+# You can test it with the client:
+python app/api_client.py
+```
+
+### Using as a Python Package
+After installation, you can import the package in your Python code:
+
+```python
+from car_classifier import create_model, ModelTrainer, create_data_loaders
+
+# Load data
+train_loader, val_loader, num_classes = create_data_loaders(
+    json_path='data.json',
+    image_dir='images/',
+    batch_size=32
+)
+
+# Create model
+model = create_model(backbone='resnet50', num_classes=num_classes)
+
+# Train
+trainer = ModelTrainer(model, device='cuda')
+trainer.train(train_loader, val_loader, num_epochs=50)
 ```
 
 ## Contributing

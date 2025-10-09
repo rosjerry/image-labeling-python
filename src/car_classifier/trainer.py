@@ -187,7 +187,7 @@ class ModelTrainer:
         return avg_loss, accuracies
     
     def validate_epoch(self, val_loader: DataLoader, criterion: nn.Module, 
-                      epoch: int) -> Tuple[float, Dict[str, float]]:
+        epoch: int) -> Tuple[float, Dict[str, float]]:
         """
         Validate for one epoch.
         
