@@ -42,8 +42,12 @@ image-labeling-python/
 ├── docker/
 │   ├── Dockerfile
 │   └── docker-compose.yml
+├── data/                        # Data directory
+│   ├── annotations/            # Input JSON annotations
+│   ├── images/                 # Training images
+│   ├── predictions/            # Model predictions output
+│   └── raw/                    # Raw unprocessed data
 ├── checkpoints/                 # Model checkpoints
-├── images/                      # Training images
 ├── config.yaml                  # Configuration file
 ├── requirements.txt             # Python dependencies
 ├── setup.py                     # Package installation
@@ -70,9 +74,9 @@ pip install .
 This will install the `car_classifier` package and all dependencies from `requirements.txt`.
 
 3. **Prepare your data**:
-   - Place your Label Studio JSON file in the project directory
-   - Organize your images in a directory (e.g., `images/`)
-   - Update the paths in `config.yaml` or use command line arguments
+   - Place your Label Studio JSON files in `data/annotations/`
+   - Organize your images in `data/images/`
+   - Model predictions will be saved to `data/predictions/`
 
 ## Usage
 
@@ -81,15 +85,15 @@ This will install the `car_classifier` package and all dependencies from `requir
 #### Basic Training
 ```bash
 # Using the train script from examples
-python examples/train.py --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
-                         --image_dir images/ \
+python examples/train.py --json_path data/annotations/project-1-at-2025-10-05-21-43-98b8ac33.json \
+                         --image_dir data/images/ \
                          --backbone resnet50 \
                          --epochs 50 \
                          --batch_size 32
 
 # Or if installed, use the command-line tool
-car-classifier-train --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
-                     --image_dir images/ \
+car-classifier-train --json_path data/annotations/project-1-at-2025-10-05-21-43-98b8ac33.json \
+                     --image_dir data/images/ \
                      --backbone resnet50 \
                      --epochs 50 \
                      --batch_size 32
@@ -137,8 +141,8 @@ car-classifier-inference --model_path checkpoints/best_model.pth \
 ```bash
 python -m car_classifier.inference --model_path checkpoints/best_model.pth \
                                    --label_mapping checkpoints/label_mapping.json \
-                                   --image_dir test_images/ \
-                                   --output_path predictions.json
+                                   --image_dir data/images/ \
+                                   --output_path data/predictions/results.json
 ```
 
 ## Configuration

@@ -11,8 +11,8 @@ pip install -e .
 ### 2. Run Training
 ```bash
 python examples/train.py \
-    --json_path project-1-at-2025-10-05-21-43-98b8ac33.json \
-    --image_dir images/ \
+    --json_path data/annotations/project-1-at-2025-10-05-21-43-98b8ac33.json \
+    --image_dir data/images/ \
     --epochs 50 \
     --batch_size 32
 ```
@@ -68,8 +68,8 @@ from car_classifier import create_model, ModelTrainer, create_data_loaders
 ### Train a Model
 ```bash
 python examples/train.py \
-    --json_path data.json \
-    --image_dir images/ \
+    --json_path data/annotations/training_data.json \
+    --image_dir data/images/ \
     --backbone resnet50 \
     --epochs 100
 ```
@@ -79,8 +79,8 @@ python examples/train.py \
 python -m car_classifier.inference \
     --model_path checkpoints/best_model.pth \
     --label_mapping checkpoints/label_mapping.json \
-    --image_dir test_images/ \
-    --output_path predictions.json
+    --image_dir data/images/ \
+    --output_path data/predictions/results.json
 ```
 
 ### Use the API
@@ -143,8 +143,8 @@ python create_label.py
 
 ### New Way:
 ```bash
-python examples/train.py --json_path data.json --image_dir images/
-python -m car_classifier.inference --model_path model.pth --image_path test.jpg
+python examples/train.py --json_path data/annotations/data.json --image_dir data/images/
+python -m car_classifier.inference --model_path model.pth --image_path data/images/test.jpg
 python scripts/labelstudio/create_labels.py
 ```
 

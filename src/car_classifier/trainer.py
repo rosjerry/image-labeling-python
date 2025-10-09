@@ -281,7 +281,7 @@ class ModelTrainer:
             scaler = torch.cuda.amp.GradScaler()
         
         # Setup loss function
-        from model import MultiLabelLoss
+        from .model import MultiLabelLoss
         criterion = MultiLabelLoss()
         
         # Setup early stopping
@@ -438,8 +438,8 @@ class ModelTrainer:
 
 if __name__ == "__main__":
     # Test the trainer
-    from model import create_model, MultiLabelLoss
-    from data_loader import create_data_loaders
+    from .model import create_model, MultiLabelLoss
+    from .data_loader import create_data_loaders
     
     # Create dummy data for testing
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

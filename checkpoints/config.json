@@ -1,6 +1,6 @@
 {
-  "json_path": "project-1-at-2025-10-05-21-43-98b8ac33.json",
-  "image_dir": "images",
+  "json_path": "data/annotations/project-1-at-2025-10-05-21-43-98b8ac33.json",
+  "image_dir": "data/images/",
   "val_split": 0.2,
   "image_size": 224,
   "batch_size": 32,
