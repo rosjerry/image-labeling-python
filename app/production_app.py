@@ -24,122 +24,134 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
 
 # Global variables for model
 model = None
 label_mappings = None
 device = None
 
+
 def load_model():
     """Load the trained model and label mappings."""
     global model, label_mappings, device
-    
+
     try:
         # Set device
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         logger.info(f"Using device: {device}")
-        
+
         # Load model checkpoint
-        checkpoint_path = 'checkpoints/best_model.pth'
+        checkpoint_path = "checkpoints/best_model.pth"
         if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(f"Model checkpoint not found: {checkpoint_path}")
-        
-        checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
-        logger.info(f"Loaded checkpoint from epoch {checkpoint.get('epoch', 'unknown')}")
-        
+
+        checkpoint = torch.load(
+            checkpoint_path, map_location=device, weights_only=False
+        )
+        logger.info(
+            f"Loaded checkpoint from epoch {checkpoint.get('epoch', 'unknown')}"
+        )
+
         # Get model configuration
-        if 'model_config' in checkpoint:
-            model_config = checkpoint['model_config']
+        if "model_config" in checkpoint:
+            model_config = checkpoint["model_config"]
             model = create_model(**model_config)
         else:
             # Use the correct class counts from the trained model
-            num_classes = {'make': 2, 'model': 2, 'steer_wheel': 1}
+            num_classes = {"make": 2, "model": 2, "steer_wheel": 1}
             model = create_model(num_classes=num_classes)
-        
-        model.load_state_dict(checkpoint['model_state_dict'])
+
+        model.load_state_dict(checkpoint["model_state_dict"])
         model.to(device)
         model.eval()
-        
+
         # Load label mappings
-        label_mapping_path = 'checkpoints/label_mapping.json'
-        logger.info(f"Looking for label mappings at: {os.path.abspath(label_mapping_path)}")
+        label_mapping_path = "checkpoints/label_mapping.json"
+        logger.info(
+            f"Looking for label mappings at: {os.path.abspath(label_mapping_path)}"
+        )
         if os.path.exists(label_mapping_path):
-            with open(label_mapping_path, 'r') as f:
+            with open(label_mapping_path, "r") as f:
                 label_mappings = json.load(f)
             logger.info(f"Loaded label mappings: {label_mappings}")
         else:
             # Create default mappings if not found
             label_mappings = {
-                'make': {'honda': 0, 'toyota': 1},
-                'model': {'accord': 0, 'rav4': 1},
-                'steer_wheel': {'left': 0}
+                "make": {"honda": 0, "toyota": 1},
+                "model": {"accord": 0, "rav4": 1},
+                "steer_wheel": {"left": 0},
             }
             logger.warning("Label mappings not found, using default mappings")
-        
+
         logger.info("Model loaded successfully!")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to load model: {e}")
         return False
+
 
 def preprocess_image(image):
     """Preprocess image for model inference."""
     try:
         # Convert to RGB if needed
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
         # Get transforms
         _, transform = get_data_transforms()
-        
+
         # Apply transforms
         image_tensor = transform(image).unsqueeze(0).to(device)
-        
+
         return image_tensor
-        
+
     except Exception as e:
         logger.error(f"Error preprocessing image: {e}")
         raise
 
+
 def predict_image(image):
     """Predict car attributes from image."""
     global model, label_mappings
-    
+
     try:
         # Preprocess image
         image_tensor = preprocess_image(image)
-        
+
         # Get predictions
         with torch.no_grad():
             predictions = model(image_tensor)
-        
+
         # Convert predictions to labels and probabilities
         results = {}
         for attr_name, logits in predictions.items():
             probabilities = F.softmax(logits, dim=1)
             predicted_class = torch.argmax(probabilities, dim=1).item()
             confidence = probabilities[0, predicted_class].item()
-            
+
             # Convert to label name
             if attr_name in label_mappings:
                 reverse_mapping = {v: k for k, v in label_mappings[attr_name].items()}
-                label_name = reverse_mapping.get(predicted_class, f"class_{predicted_class}")
+                label_name = reverse_mapping.get(
+                    predicted_class, f"class_{predicted_class}"
+                )
             else:
                 label_name = f"class_{predicted_class}"
-            
+
             results[attr_name] = {
-                'label': label_name,
-                'confidence': float(confidence),
-                'class_id': predicted_class
+                "label": label_name,
+                "confidence": float(confidence),
+                "class_id": predicted_class,
             }
-        
+
         return results
-        
+
     except Exception as e:
         logger.error(f"Error during prediction: {e}")
         raise
+
 
 # HTML template for the web interface
 HTML_TEMPLATE = """
@@ -321,65 +333,74 @@ HTML_TEMPLATE = """
 </html>
 """
 
-@app.route('/')
+
+@app.route("/")
 def index():
     """Serve the main web interface."""
     return render_template_string(HTML_TEMPLATE)
 
-@app.route('/predict', methods=['POST'])
+
+@app.route("/predict", methods=["POST"])
 def predict():
     """API endpoint for image prediction."""
     try:
         # Check if image file is provided
-        if 'image' not in request.files:
-            return jsonify({'error': 'No image file provided'}), 400
-        
-        file = request.files['image']
-        if file.filename == '':
-            return jsonify({'error': 'No image file selected'}), 400
-        
+        if "image" not in request.files:
+            return jsonify({"error": "No image file provided"}), 400
+
+        file = request.files["image"]
+        if file.filename == "":
+            return jsonify({"error": "No image file selected"}), 400
+
         # Read and process image
         image = Image.open(file.stream)
-        
+
         # Get predictions
         predictions = predict_image(image)
-        
+
         return jsonify(predictions)
-        
+
     except Exception as e:
         logger.error(f"Prediction error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/health')
+
+@app.route("/health")
 def health():
     """Health check endpoint."""
-    return jsonify({
-        'status': 'healthy',
-        'model_loaded': model is not None,
-        'device': str(device) if device else 'unknown'
-    })
+    return jsonify(
+        {
+            "status": "healthy",
+            "model_loaded": model is not None,
+            "device": str(device) if device else "unknown",
+        }
+    )
 
-@app.route('/model_info')
+
+@app.route("/model_info")
 def model_info():
     """Get model information."""
     if model is None:
-        return jsonify({'error': 'Model not loaded'}), 500
-    
-    return jsonify({
-        'model_loaded': True,
-        'device': str(device),
-        'label_mappings': label_mappings,
-        'model_parameters': sum(p.numel() for p in model.parameters())
-    })
+        return jsonify({"error": "Model not loaded"}), 500
 
-if __name__ == '__main__':
+    return jsonify(
+        {
+            "model_loaded": True,
+            "device": str(device),
+            "label_mappings": label_mappings,
+            "model_parameters": sum(p.numel() for p in model.parameters()),
+        }
+    )
+
+
+if __name__ == "__main__":
     # Load model on startup
     if not load_model():
         logger.error("Failed to load model. Exiting.")
         exit(1)
-    
+
     # Start the web server
     logger.info("Starting Car Classification API server...")
     logger.info("Open http://localhost:5000 in your browser")
-    
-    app.run(host='0.0.0.0', port=5000, debug=False)
+
+    app.run(host="0.0.0.0", port=5000, debug=False)

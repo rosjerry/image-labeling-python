@@ -12,6 +12,7 @@ Install the package:
 from setuptools import setup, find_packages
 import os
 
+
 # Read the long description from README
 def read_long_description():
     try:
@@ -20,13 +21,17 @@ def read_long_description():
     except FileNotFoundError:
         return "Multi-label car classification package"
 
+
 # Read requirements
 def read_requirements():
     try:
         with open("requirements.txt", "r", encoding="utf-8") as fh:
-            return [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+            return [
+                line.strip() for line in fh if line.strip() and not line.startswith("#")
+            ]
     except FileNotFoundError:
         return []
+
 
 setup(
     name="car-classifier",
@@ -72,4 +77,3 @@ setup(
     include_package_data=True,
     zip_safe=False,
 )
-
